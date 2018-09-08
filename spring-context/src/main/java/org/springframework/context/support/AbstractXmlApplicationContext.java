@@ -125,13 +125,21 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 	 * @see #getResources
 	 * @see #getResourcePatternResolver
 	 */
+	//Xml Bean读取器加载Bean定义资源
 	protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws BeansException, IOException {
+		//获取Bean定义资源的定位
+		//这里使用了一个委托模式，调用子类的获取Bean定义资源定位的方法
+		//该方法在ClassPathXmlApplicationContext中进行实现，对于我们
+		//举例分析源码的FileSystemXmlApplicationContext没有使用该方法
 		Resource[] configResources = getConfigResources();
 		if (configResources != null) {
+			//Xml Bean读取器调用其父类AbstractBeanDefinitionReader读取定位的Bean定义资源
 			reader.loadBeanDefinitions(configResources);
 		}
+		//如果子类中获取的Bean定义资源定位为空，则获取FileSystemXmlApplicationContext构造方法中setConfigLocations方法设置的资源
 		String[] configLocations = getConfigLocations();
 		if (configLocations != null) {
+			//Xml Bean读取器调用其父类AbstractBeanDefinitionReader读取定位的Bean定义资源
 			reader.loadBeanDefinitions(configLocations);
 		}
 	}
