@@ -1,2 +1,12 @@
 学习源码：加注释
 ClassPathXmlApplicationContext与FileSystemXmlApplicationContext源码结构图
+
+
+获取bean
+1、从abstractBeanFactory中的doGetBean方法中获取
+2、AbstractAutowireCapableBeanFactory创建bean实例对象 creatBean方法
+
+
+spring中生成的bean一般是代理模式生成的，默认cglib，拥有这个代理类的控制权
+
+SimpleInstantiationStrategy
