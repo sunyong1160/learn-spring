@@ -17,13 +17,8 @@ BeanDefinitionValueResolver解析属性值 数据拷贝：原型模式
 ioc容器存储bean对象是用concurrentHashMap存储的，FactoryBeanRegisterSupport
 真正的ioc容器 factoryBeanObjectCache  map
 
-获取bean
-1、获取BeanDefinition信息
-2、调用factoryBean的createBean()方法，createBeanInstance根据情况可能用jdk代理、cglib代理依赖关系  list map array
-populateBean方法 注入，做类型转换
-
  总结：
- Spring ioc
+ Spring ioc  ClassPathXmlApplicationContext和FileSystemXmlApplicationContext入口 顶层接口BeanFactory
  1.定位配置文件
  2.载入 读取配置文件
  3.注册 把加载好的配置文件解释成beandefinition
@@ -79,11 +74,33 @@ populateBean方法 注入，做类型转换
 
 ############################################################
 
- 二、Spring DI：
+ 二、Spring DI： AbstractBeanFactory和AbstractAutowireCapableBeanFactory
  1.读取beanDefinition获取其依赖关系
  2、实例化(代理对象)
  3、注入：设值
     createBeanInstance() 创建实例  放入到ioc容器中
     populated() 对bean属性的依赖注入进行处理
 
+ 获取bean
+ 1、获取BeanDefinition信息
+ 2、调用factoryBean的createBean()方法，createBeanInstance根据情况可能用jdk代理、cglib代理依赖关系  list map array
+ populateBean方法 注入，做类型转换
+
    如果使用了延时 依赖注入这个动作发生在调用getBean方法的时候
+
+
+   ======================================
+
+
+   AOP
+   proxyFactory
+   因为IOC容器中存放的就是FactoryBean，AOP工厂生产出来的Bean是存放在IOC容器中去的。
+
+   IOC也是Factory入手的，找到一个getBean()的方法
+   AOP的ProxyFactory中的getProxy，这个方法就是用来获取一个代理以后的Bean，跟IOC体系里面的getBean()异曲同工之处。
+   AOP是依赖于IOC容器的，先等我们IOC容器启动以后，进行二次操作，
+   AOP不要执行上面的那些创建对象的操作了，只要能够拿到IOC容器的引用，直接从IOC容器中取出需要被二次操作的所有的对象。
+   IOC里已经是代理类了，那么AOP中，是对代理类的二次深操作，每个动作都要被管控。IOC里除了是原型的，都是被代理的类
+
+
+
