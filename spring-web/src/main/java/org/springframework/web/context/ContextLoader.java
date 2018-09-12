@@ -257,6 +257,13 @@ public class ContextLoader {
 	 * @see #CONTEXT_CLASS_PARAM
 	 * @see #CONFIG_LOCATION_PARAM
 	 */
+	/**
+	 * ServletContext,servlet 上下文，即application对象
+	 * 首先通过WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE这个String类型的静态变量获取一个IOC容器，根据IOC容器作为全局变量存储在application对象中，
+	 * 如果存在则有且只有一个，如果在初始化根WebApplicationContext，即根IOC容器时发现已经存在则直接抛出异常，因此web.xml中只允许存在一个ContextLoader类及其子类的存在
+	 * @param servletContext
+	 * @return
+	 */
 	public WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
 		if (servletContext.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE) != null) {
 			throw new IllegalStateException(
@@ -274,6 +281,7 @@ public class ContextLoader {
 		try {
 			// Store context in local instance variable, to guarantee that
 			// it is available on ServletContext shutdown.
+			// 如果当前成员变量中不存在WebApplicationContext则创建一个根
 			if (this.context == null) {
 				this.context = createWebApplicationContext(servletContext);
 			}
@@ -285,12 +293,18 @@ public class ContextLoader {
 					if (cwac.getParent() == null) {
 						// The context instance was injected without an explicit parent ->
 						// determine parent for root web application context, if any.
+						//为根WebApplicationContext设置一个父容器
 						ApplicationContext parent = loadParentContext(servletContext);
 						cwac.setParent(parent);
 					}
+					//配置并刷新整个根IoC容器，在这里会进行Bean的创建和初始化
 					configureAndRefreshWebApplicationContext(cwac, servletContext);
 				}
 			}
+			/**
+			 * 将创建好的IoC容器放入到application对象中，并设置key为WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE
+			 * 因此，在SpringMVC开发中可以在jsp中通过该key在application对象中获取到根IoC容器，进而获取到相应的Ben
+			 */
 			servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, this.context);
 
 			ClassLoader ccl = Thread.currentThread().getContextClassLoader();
@@ -383,6 +397,11 @@ public class ContextLoader {
 		}
 
 		wac.setServletContext(sc);
+		/**
+		 * CONFIG_LOCATION_PARAM = "contextConfigLoaction";
+		 * 获取web.xml中的<context-param></context-param>标签配置的全局变量，
+		 * 其中key为CONFIG_LOCATION_PARAM也就是我们配置的相应Bean的xml文件名，并将其放入到WebApplicationContex中
+		 */
 		String configLocationParam = sc.getInitParameter(CONFIG_LOCATION_PARAM);
 		if (configLocationParam != null) {
 			wac.setConfigLocation(configLocationParam);
@@ -397,6 +416,7 @@ public class ContextLoader {
 		}
 
 		customizeContext(sc, wac);
+		// 很重要的方法，IOC容器初始化的过程，读入Bean资源，解析，注册的过程
 		wac.refresh();
 	}
 

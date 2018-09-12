@@ -81,7 +81,7 @@ ioc容器存储bean对象是用concurrentHashMap存储的，FactoryBeanRegisterS
  2、实例化(代理对象)
  3、注入：设值
     createBeanInstance() 创建实例  放入到ioc容器中
-    populated() 对bean属性的依赖注入进行处理
+    populateBEan() 对bean属性的依赖注入进行处理
 
  获取bean
  1、获取BeanDefinition信息
@@ -122,5 +122,11 @@ ioc容器存储bean对象是用concurrentHashMap存储的，FactoryBeanRegisterS
     JdkDynamicAopProxy调用AdvisedSupport的getInterceptorsAndDynamicInterceptionAdvice方法得到方法拦截器，并保存到一个容器
 
     递归执行拦截器方法proceed()方法
+
+
+   ======================================
+    SpringMVC
+    初始化：onRefresh();调用doService()方法
+    HandlerMapping和HandlerAdapters都是通过注解扫描得来的保存在一个工厂里面
 
 

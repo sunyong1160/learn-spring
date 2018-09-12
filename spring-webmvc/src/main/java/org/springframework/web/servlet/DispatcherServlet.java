@@ -488,6 +488,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	/**
 	 * This implementation calls {@link #initStrategies}.
 	 */
+	// 只要是IOC容器启动以后，就会调用onRefresh()方法
 	@Override
 	protected void onRefresh(ApplicationContext context) {
 		initStrategies(context);
@@ -498,14 +499,24 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
 	 */
 	protected void initStrategies(ApplicationContext context) {
+
+		//请求解析
 		initMultipartResolver(context);
+		// 多语言、国际化
 		initLocaleResolver(context);
+		//主题View层
 		initThemeResolver(context);
+		//解析url和method的关联关系
 		initHandlerMappings(context);
+		// 适配器(匹配的过程)
 		initHandlerAdapters(context);
+		// 异常解析
 		initHandlerExceptionResolvers(context);
+		//
 		initRequestToViewNameTranslator(context);
+		//解析模板中的内容（拿到服务器传过来的数据，生成HTML代码）
 		initViewResolvers(context);
+		//
 		initFlashMapManager(context);
 	}
 
@@ -598,6 +609,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			if (!matchingBeans.isEmpty()) {
 				this.handlerMappings = new ArrayList<>(matchingBeans.values());
 				// We keep HandlerMappings in sorted order.
+				// 排序
 				AnnotationAwareOrderComparator.sort(this.handlerMappings);
 			}
 		}
@@ -994,6 +1006,9 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * @param response current HTTP response
 	 * @throws Exception in case of any kind of processing failure
 	 */
+	/**
+	 * 中央控制器,控制请求的转发
+	 **/
 	protected void doDispatch(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		HttpServletRequest processedRequest = request;
 		HandlerExecutionChain mappedHandler = null;
@@ -1006,20 +1021,28 @@ public class DispatcherServlet extends FrameworkServlet {
 			Exception dispatchException = null;
 
 			try {
+				// 解析请求，判断是否为复合请求（包含一些文件流（多媒体）信息）
+				//1.检查是否是文件上传的请求
 				processedRequest = checkMultipart(request);
 				multipartRequestParsed = (processedRequest != request);
 
 				// Determine handler for the current request.
+				// 2.取得处理当前请求的controller,这里也称为hanlder,处理器,第一个步骤的意义就在这里体现了.
+				//这里并不是直接返回controller,而是返回的HandlerExecutionChain请求处理器链对象,
+				//该对象封装了handler和interceptors.
 				mappedHandler = getHandler(processedRequest);
 				if (mappedHandler == null) {
+					// 如果handler为空,则返回404
 					noHandlerFound(processedRequest, response);
 					return;
 				}
 
 				// Determine handler adapter for the current request.
+				//3. 获取处理request的处理器适配器handler adapter
 				HandlerAdapter ha = getHandlerAdapter(mappedHandler.getHandler());
 
 				// Process last-modified header, if supported by the handler.
+				// 处理 last-modified 请求头
 				String method = request.getMethod();
 				boolean isGet = "GET".equals(method);
 				if (isGet || "HEAD".equals(method)) {
@@ -1029,18 +1052,22 @@ public class DispatcherServlet extends FrameworkServlet {
 					}
 				}
 
+				// 4.拦截器的预处理方法
 				if (!mappedHandler.applyPreHandle(processedRequest, response)) {
 					return;
 				}
 
 				// Actually invoke the handler.
+				// 5.实际的处理器处理请求,返回结果视图对象
 				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
 
 				if (asyncManager.isConcurrentHandlingStarted()) {
 					return;
 				}
 
+				// 结果视图对象的处理
 				applyDefaultViewName(processedRequest, mv);
+				// 6.拦截器的后处理方法
 				mappedHandler.applyPostHandle(processedRequest, response, mv);
 			}
 			catch (Exception ex) {
@@ -1054,6 +1081,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
 		}
 		catch (Exception ex) {
+			// 请求成功响应之后的方法
 			triggerAfterCompletion(processedRequest, response, mappedHandler, ex);
 		}
 		catch (Throwable err) {
