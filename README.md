@@ -130,3 +130,76 @@ ioc容器存储bean对象是用concurrentHashMap存储的，FactoryBeanRegisterS
     HandlerMapping和HandlerAdapters都是通过注解扫描得来的保存在一个工厂里面
 
 
+设计模式                                    应用场景                                                            一句话归纳
+
+代理模式                    1.两个参与角色：执行者（代理人），被代理人                                     办事要求人，所以找代理
+(proxy)                     2.对于被代理人来说，这件事情是一点要做的，但是我自己又不想去做，
+                               或者没有时间去做，找代理。
+                            3.代理人必须需要获取被代理人的个人资料（持有被代理人的引用）
+
+工厂模式                    1.对于调用者来说，隐藏了复杂的逻辑处理过程，调用者只关心执行结果                只需对结果负责，不要三无产品
+factory                     2.对于工厂来说要对结果负责，保证生产出符合规范的产品
+
+单例模式                    1.保证从系统启动到系统停止，全过程只会产生一个实例                              保证独一无二
+singleton                   2.当我们在应用中遇到功能性冲突的时候，需要使用单例模式
+
+委派模式                    1.两个参与角色：委托人和被委托人                                               干活是你的(普通员工)
+delegate                    2.委托人和被委托人在权力上是平等的(即实现同一接口)                              功劳是我的(项目经理)
+                            3.委托人持有被委托人的引用
+                            4.不关心过程，只关心结果
+
+策略模式                    1.最终执行结果是固定的                                                         我行我素，达到目的即可
+strategy                    2.执行过程和执行逻辑不一样
+
+原型模式                    1.首先有一个原型                                                               拔一根猴毛，吹出千万个
+prototype                   2.数据内容相同，但对象实例不同(完全两个个体)
+
+模板模式                    1.执行流程是固定，但中间有些步骤有细微差别(运行时才确定)                         流程标准化，原料自给加
+template                    2.可实现批量生产
+
+
+SpringMvc的优化：
+1、controller如果能保持单例，尽量使用单例，这样可以减少创建对象和回收对象的开销，也就是说，如果controller的类变量和实例变量可以以方法形参声明的
+    尽量以方法的形参声明，不要以类变量和实例变量声明，这样可以避免线程安全问题
+2、处理request的方法中的形参务必加上@RequestParam注解，这样可以避免springmvc使用asm框架读取class文件获取方法参数名的过程，即便springmvc对读取出
+    的方法参数名进行缓存，如果不要读取class文件当然是更加好.
+3、阅读源码的过程中，发现springmvc并没有对处理url的方法进行缓存，也就是说每次都要根据请求url去匹配controller中的方法url，如果url和method的关系缓存起来，
+    会不会带来性能上的提升呢？有点恶心的是，负责解析url和method对应关系的ServletHandlerMethodResolver是一个private的内部类，不能直接继承该类增强代码，
+    必须要改代码后重新编译。当然，如果缓存起来，必须要考虑缓存的线程安全问题
+
+
+spring事务总结：
+1、什么是事务:
+    一个整体的执行逻辑单元，只有两个结果，要么全成功，要么全失败
+2、事务的特性:
+    原子性、隔离性、持久性、一致性
+3、事务的基本原理:
+    从数据库角度来说:就是提供了一种后悔机制(代码写错了，可以SVN、Git)
+    使用临时表实现后悔,执行增、删、改之前，先将满足条件的数据查询出来放入到临时表中
+    将数据操作现在临时表中完成，完成过程中如果没有出现任何问题，就将数据同步(剪切)实际的数据表中，并返回影响行数
+    将数据操作在临时表中完成，完成过程中一旦出现错误，那就将临时表中满足条件的数据清掉，并返回错误码
+
+    两个都是增删改操作，就会出现死锁(死锁超时，就需要人工解决)
+    杀进程(写SQL语句杀死进程)
+
+    如果要想对一个数据表的数据进行清空(千千万万别用delete from，这种情况，一定就是锁表)
+    加了where条件，就是行锁
+
+4、Spring的事务管理
+    AOP配置，配置哪些方法需要加事务
+    声明式事务配置，事务的传播属性、隔离级别、回滚条件
+
+    传播属性: 1.default 2.required 3.request_new 4.supports 5.nested
+    隔离级别: 1.default 2.read_uncommited 3.read_commited 4.repeatable_read 5.serializable
+
+5、源码 TransactionDefinition  PlatformTransactionManager  TransactionStatus
+    通过解析配置文件得到TransactionDefinition，实际上就是AOP中的methodInteceptor(方法代理)
+    就可以在满足条件的方法调用之前和调用之后加一些东西
+
+    platformTransactionManager中的方法
+    getTransaction 调用了TransactionSynchronizationManager类的getResource()
+    从ThreadLocal里面取值，Map<Key:DataSource,Value:ConnectionHolder(相当于获取一个连接对象Connection)>
+
+    conn.setAutoCommit
+
+    Commit conn.commit();
